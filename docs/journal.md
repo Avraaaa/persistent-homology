@@ -16,10 +16,17 @@
    enclosingRadius = min over i of max over j dist(i,j)
    ```
 
+## 23rd June, 2026
+
+1. Add 2 more print statements, one for only printing non zero length intervals, another for your betti numbers and the amount of simplices created for each d-dimension.
+
+2. Add support for 3 simplices.
+
 ### Next goals
 
 1. Have to investigate further into what the differences between these two approaches are, pros and cons, and the way to implement the latter.
 
 2. Implement it using sparse boundary representation.
 
-3. Print only the important barcodes and Betti numbers.
+
+
