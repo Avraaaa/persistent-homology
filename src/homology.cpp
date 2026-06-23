@@ -128,7 +128,30 @@ public:
             }
         }
 
-        // might add 3 simplices later to kill the triangles
+        // add 3-simplices(tetrahedrons)
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = i + 1; j < n; j++)
+            {
+                for (int k = j + 1; k < n; k++)
+                {
+                    for (int l = k + 1; l < n; l++)
+                    {
+                        double d1 = Point::calcDistance(points[i], points[j]);
+                        double d2 = Point::calcDistance(points[i], points[k]);
+                        double d3 = Point::calcDistance(points[i], points[l]);
+                        double d4 = Point::calcDistance(points[j], points[k]);
+                        double d5 = Point::calcDistance(points[j], points[l]);
+                        double d6 = Point::calcDistance(points[k], points[l]);
+                        double distance_as_birthtime = max({d1, d2, d3, d4, d5, d6});
+
+                        Simplex s = Simplex(distance_as_birthtime, 3, vector<int>{i, j, k, l});
+                        filtration.push_back(s);
+                    }
+                }
+            }
+        }
+
         //  sort first by time then by dimension
         sort(filtration.begin(), filtration.end(), [](const Simplex &s1, const Simplex &s2)
              {
@@ -276,7 +299,7 @@ public:
     static void printIntervals(vector<Interval> intervals)
     {
         ofstream file;
-        file.open("output.txt");
+        file.open("all_intervals");
 
         for (int i = 0; i < intervals.size(); i++)
         {
@@ -290,6 +313,105 @@ public:
             {
                 file << "(" << intervals[i].birth << ", " << intervals[i].death << ")" << endl;
             }
+        }
+
+        file.close();
+
+    }
+
+    static void printImportantIntervals(vector<Interval> intervals)
+    {
+        ofstream file;
+        file.open("useful_intervals");
+
+        double eps = 1e-6;
+        int maxDimension = 0;
+
+        for (int i = 0; i < intervals.size(); i++)
+        {
+            maxDimension = max(maxDimension, intervals[i].dimension);
+        }
+
+        for (int i = 0; i < intervals.size(); i++)
+        {
+            if (intervals[i].dimension >= maxDimension)
+            {
+                continue;
+            }
+
+            if (intervals[i].death != -1)
+            {
+                double length = intervals[i].death - intervals[i].birth;
+
+                if (length <= eps)
+                {
+                    continue;
+                }
+            }
+
+            file << "H" << intervals[i].dimension << " : ";
+
+            if (intervals[i].death == -1)
+            {
+                file << "(" << intervals[i].birth << ", " << "inf" << ")" << endl;
+            }
+            else
+            {
+                file << "(" << intervals[i].birth << ", " << intervals[i].death << ")" << endl;
+            }
+        }
+
+        file.close();
+
+    }
+
+    static void printBettiNumbers(vector<Interval> intervals)
+    {
+        ofstream file;
+        file.open("betti_numbers");
+
+        int maxDimension = 0;
+
+        for (int i = 0; i < intervals.size(); i++)
+        {
+            maxDimension = max(maxDimension, intervals[i].dimension);
+        }
+
+        vector<int> totalIntervals(maxDimension + 1, 0);
+        vector<int> killedIntervals(maxDimension + 1, 0);
+        vector<int> bettiNumbers(maxDimension + 1, 0);
+
+        for (int i = 0; i < intervals.size(); i++)
+        {
+            int dimension = intervals[i].dimension;
+
+            totalIntervals[dimension]++;
+
+            if (intervals[i].death == -1)
+            {
+                bettiNumbers[dimension]++;
+            }
+            else
+            {
+                killedIntervals[dimension]++;
+            }
+        }
+
+        file << "interval counts" << endl;
+
+        for (int i = 0; i <= maxDimension; i++)
+        {
+            file << "H" << i << " total intervals created : " << totalIntervals[i] << endl;
+            file << "H" << i << " intervals killed : " << killedIntervals[i] << endl;
+        }
+
+        file << endl;
+        file << "betti numbers" << endl;
+
+        for (int i = 0; i <= maxDimension; i++)
+        {
+            file << "B" << i << " : " << bettiNumbers[i] << endl;
+            cout << "B" << i << " : " << bettiNumbers[i] << endl;
         }
 
         file.close();
@@ -362,6 +484,8 @@ int main()
     vector<Interval> intervals = Persistence::reduction(B, filtration);
 
     Persistence::printIntervals(intervals);
+    Persistence::printImportantIntervals(intervals);
+    Persistence::printBettiNumbers(intervals);
 
     return 0;
 }
