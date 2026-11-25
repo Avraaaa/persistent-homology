@@ -19,24 +19,25 @@ struct VectorHash
 class Point
 {
 public:
-    double x, y, z;
+    vector<double> coords;
     inline static double max_distance = 0.0;
 
-    Point(double x, double y, double z)
+    Point(const vector<double> &coords)
     {
-        this->x = x;
-        this->y = y;
-        this->z = z;
+        this->coords = coords;
     }
 
     static double calcDistance(const Point &p1, const Point &p2)
     {
-        double dx = p2.x - p1.x;
-        double dy = p2.y - p1.y;
-        double dz = p2.z - p1.z;
+        double distance = 0.0;
 
-        double distance = sqrt(dx * dx + dy * dy + dz * dz);
-        return distance;
+        for (int i = 0; i < p1.coords.size(); i++)
+        {
+            double diff = p2.coords[i] - p1.coords[i];
+            distance += diff * diff;
+        }
+
+        return sqrt(distance);
     }
 
     static void setMaxDistance(double distance)
@@ -456,13 +457,43 @@ vector<Point> loadFromFile(string filename)
         return points;
     }
 
-    double x;
-    double y;
-    double z;
+    string line;
+    int dimension = 0;
 
-    while (file >> x >> y >> z)
+    while (getline(file, line))
     {
-        Point p(x, y, z);
+        istringstream ss(line);
+        vector<double> coords;
+        double value;
+
+        while (ss >> ws && !ss.eof())
+        {
+            if (!(ss >> value))
+            {
+                cout << "invalid coordinate" << endl;
+                return {};
+            }
+
+            coords.push_back(value);
+        }
+
+        if (coords.empty())
+        {
+            continue;
+        }
+
+        if (dimension == 0)
+        {
+            dimension = coords.size();
+        }
+
+        if (coords.size() != dimension)
+        {
+            cout << "dimension mismatch" << endl;
+            return {};
+        }
+
+        Point p(coords);
         points.push_back(p);
     }
 
